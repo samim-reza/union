@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Loans | Union Manager{% endblock %}
+{% block content %}
+<section class="panel reveal">
+    <div class="panel-head">
+        <h1>Loan Requests</h1>
+        <a class="btn btn-primary" href="{% url 'create-loan-request' %}">New Borrow Request</a>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Applicant</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loan in page_obj %}
+                    <tr>
+                        <td>#{{ loan.pk }}</td>
+                        <td>{{ loan.applicant.get_full_name|default:loan.applicant.username }}</td>
+                        <td>৳{{ loan.amount }}</td>
+                        <td><span class="status {{ loan.status|lower }}">{{ loan.get_status_display }}</span></td>
+                        <td>{{ loan.created_at|date:'d M Y, h:i A' }}</td>
+                        <td><a href="{% url 'loan-detail' loan.pk %}">Open</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6">No loan requests found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'partials/pagination.html' %}
+</section>
+{% endblock %}

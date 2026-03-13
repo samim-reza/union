@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Loan #{{ loan.pk }} | Union Manager{% endblock %}
+{% block content %}
+<section class="panel reveal">
+    <h1>Loan Request #{{ loan.pk }}</h1>
+    <div class="grid cards compact-grid">
+        <article class="card">
+            <h3>Applicant</h3>
+            <p>{{ loan.applicant.get_full_name|default:loan.applicant.username }}</p>
+        </article>
+        <article class="card">
+            <h3>Amount</h3>
+            <p>৳{{ loan.amount }}</p>
+        </article>
+        <article class="card">
+            <h3>Status</h3>
+            <p><span class="status {{ loan.status|lower }}">{{ loan.get_status_display }}</span></p>
+        </article>
+        <article class="card">
+            <h3>Votes Needed</h3>
+            <p>{{ required_votes }}</p>
+        </article>
+    </div>
+    <p><strong>Purpose:</strong> {{ loan.purpose }}</p>
+
+    {% if can_vote %}
+        <section class="panel soft-panel">
+            <h2>Confirm This Request</h2>
+            <form method="post" action="{% url 'vote-on-loan' loan.pk %}" class="stack-form">
+                {% csrf_token %}
+                {{ vote_form.as_p }}
+                <button type="submit" class="btn btn-primary">Submit Vote</button>
+            </form>
+        </section>
+    {% elif user_vote %}
+        <p class="subtle">You already voted: <strong>{{ user_vote.get_decision_display }}</strong>.</p>
+    {% endif %}
+
+    <section class="panel soft-panel">
+        <h2>Votes</h2>
+        <ul class="timeline">
+            {% for vote in votes %}
+                <li>
+                    <div>
+                        <strong>{{ vote.voter.get_full_name|default:vote.voter.username }}</strong>
+                        voted <strong>{{ vote.get_decision_display }}</strong>
+                        {% if vote.comment %} - {{ vote.comment }}{% endif %}
+                    </div>
+                    <time>{{ vote.created_at|date:'d M Y, h:i A' }}</time>
+                </li>
+            {% empty %}
+                <li>No votes submitted yet.</li>
+            {% endfor %}
+        </ul>
+    </section>
+</section>
+{% endblock %}

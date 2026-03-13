@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}My Portal | Union Manager{% endblock %}
+{% block content %}
+<section class="hero reveal">
+    <h1>My Portal</h1>
+    <p>Track your balance, deposits, and loan requests in one place.</p>
+</section>
+
+<section class="grid cards reveal-delay-1">
+    <article class="card">
+        <h3>My Deposits</h3>
+        <p class="metric">৳{{ my_total_deposits }}</p>
+    </article>
+    <article class="card">
+        <h3>My Approved Loans</h3>
+        <p class="metric">৳{{ my_approved_loans }}</p>
+    </article>
+    <article class="card">
+        <h3>My Net Balance</h3>
+        <p class="metric">৳{{ my_balance }}</p>
+    </article>
+</section>
+
+<section class="action-row reveal-delay-2">
+    <a class="btn btn-primary" href="{% url 'create-deposit' %}">Deposit Money</a>
+    <a class="btn btn-secondary" href="{% url 'create-loan-request' %}">Apply for Borrow</a>
+    <a class="btn btn-secondary" href="{% url 'deposit-list' %}?mine=1">See My Deposit History</a>
+</section>
+
+<section class="two-col reveal-delay-3">
+    <article class="panel">
+        <h2>My Recent Deposits</h2>
+        <ul class="timeline">
+            {% for deposit in my_recent_deposits %}
+                <li>
+                    <div><strong>৳{{ deposit.amount }}</strong> {% if deposit.note %}- {{ deposit.note }}{% endif %}</div>
+                    <time>{{ deposit.created_at|date:'d M Y, h:i A' }}</time>
+                </li>
+            {% empty %}
+                <li>You have not made a deposit yet.</li>
+            {% endfor %}
+        </ul>
+    </article>
+
+    <article class="panel">
+        <h2>My Loan Requests</h2>
+        <ul class="timeline">
+            {% for loan in my_recent_loans %}
+                <li>
+                    <div>
+                        <a href="{% url 'loan-detail' loan.pk %}">Loan #{{ loan.pk }}</a>
+                        for <strong>৳{{ loan.amount }}</strong>
+                        <span class="status {{ loan.status|lower }}">{{ loan.get_status_display }}</span>
+                    </div>
+                    <time>{{ loan.created_at|date:'d M Y, h:i A' }}</time>
+                </li>
+            {% empty %}
+                <li>You have not requested any loan.</li>
+            {% endfor %}
+        </ul>
+    </article>
+</section>
+{% endblock %}

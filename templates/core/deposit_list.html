@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Deposits | Union Manager{% endblock %}
+{% block content %}
+<section class="panel reveal">
+    <div class="panel-head">
+        <h1>Deposit History</h1>
+        <div class="action-row compact">
+            <a class="btn btn-secondary" href="{% url 'deposit-list' %}">All</a>
+            <a class="btn btn-secondary" href="{% url 'deposit-list' %}?mine=1">Mine</a>
+            <a class="btn btn-primary" href="{% url 'create-deposit' %}">Add Deposit</a>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Member</th>
+                    <th>Amount</th>
+                    <th>Note</th>
+                    <th>Date & Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for deposit in page_obj %}
+                    <tr>
+                        <td>{{ deposit.user.get_full_name|default:deposit.user.username }}</td>
+                        <td>৳{{ deposit.amount }}</td>
+                        <td>{{ deposit.note|default:'-' }}</td>
+                        <td>{{ deposit.created_at|date:'d M Y, h:i A' }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="4">No deposits found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'partials/pagination.html' %}
+</section>
+{% endblock %}

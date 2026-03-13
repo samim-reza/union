@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Borrow Request | Union Manager{% endblock %}
+{% block content %}
+<section class="panel reveal">
+    <h1>Apply for Borrow</h1>
+    <p class="subtle">Members will get an email and can vote from their account.</p>
+    <form method="post" class="stack-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Submit Request</button>
+    </form>
+</section>
+{% endblock %}

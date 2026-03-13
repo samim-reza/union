@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Create User | Union Manager{% endblock %}
+{% block content %}
+<section class="panel reveal">
+    <h1>Create New Member Account</h1>
+    <p class="subtle">Only admin members can access this page.</p>
+    <form method="post" class="stack-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Create User</button>
+    </form>
+</section>
+{% endblock %}

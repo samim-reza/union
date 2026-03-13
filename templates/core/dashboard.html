@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Common Portal | Union Manager{% endblock %}
+{% block content %}
+<section class="hero reveal">
+    <h1>Common Portal</h1>
+    <p>Live financial overview of the union.</p>
+</section>
+
+<section class="grid cards reveal-delay-1">
+    <article class="card">
+        <h3>Total Deposits</h3>
+        <p class="metric">৳{{ total_deposits }}</p>
+    </article>
+    <article class="card">
+        <h3>Total Borrowed</h3>
+        <p class="metric">৳{{ total_borrowed }}</p>
+    </article>
+    <article class="card">
+        <h3>Available Balance</h3>
+        <p class="metric">৳{{ union_balance }}</p>
+    </article>
+    <article class="card">
+        <h3>Members</h3>
+        <p class="metric">{{ member_count }}</p>
+    </article>
+</section>
+
+<section class="panel reveal-delay-2">
+    <div class="panel-head">
+        <h2>Contribution Percentage</h2>
+        <a class="btn btn-secondary" href="{% url 'create-deposit' %}">Add Deposit</a>
+    </div>
+    <div class="stack-list">
+        {% for item in contributions %}
+            <div class="contribution-item">
+                <div class="contribution-text">
+                    <strong>{{ item.member.get_full_name|default:item.member.username }}</strong>
+                    <span>৳{{ item.total_contributed }} ({{ item.percentage }}%)</span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill" style="width: {{ item.percentage }}%"></div>
+                </div>
+            </div>
+        {% empty %}
+            <p class="subtle">No contributions yet.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="two-col reveal-delay-3">
+    <article class="panel">
+        <h2>Recent Deposits</h2>
+        <ul class="timeline">
+            {% for deposit in recent_deposits %}
+                <li>
+                    <div>
+                        <strong>{{ deposit.user.get_full_name|default:deposit.user.username }}</strong>
+                        deposited <strong>৳{{ deposit.amount }}</strong>
+                    </div>
+                    <time>{{ deposit.created_at|date:'d M Y, h:i A' }}</time>
+                </li>
+            {% empty %}
+                <li>No deposits yet.</li>
+            {% endfor %}
+        </ul>
+    </article>
+
+    <article class="panel">
+        <h2>Recent Activity</h2>
+        <ul class="timeline">
+            {% for activity in recent_activities %}
+                <li>
+                    <div>{{ activity.description }}</div>
+                    <time>{{ activity.created_at|date:'d M Y, h:i A' }}</time>
+                </li>
+            {% empty %}
+                <li>No activity yet.</li>
+            {% endfor %}
+        </ul>
+    </article>
+</section>
+{% endblock %}

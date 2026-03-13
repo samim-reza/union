@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Login | Union Manager{% endblock %}
+{% block content %}
+<section class="auth-card reveal">
+    <h1>Welcome Back</h1>
+    <p class="subtle">Sign in to manage deposits, votes, and loan requests.</p>
+    <form method="post" class="stack-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+</section>
+{% endblock %}

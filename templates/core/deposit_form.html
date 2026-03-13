@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}New Deposit | Union Manager{% endblock %}
+{% block content %}
+<section class="panel reveal">
+    <h1>Deposit Money</h1>
+    <form method="post" class="stack-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Save Deposit</button>
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}History | Union Manager{% endblock %}
+{% block content %}
+<section class="panel reveal">
+    <h1>Action History</h1>
+    <ul class="timeline">
+        {% for item in page_obj %}
+            <li>
+                <div>
+                    <strong>{{ item.actor.get_full_name|default:item.actor.username|default:'System' }}</strong>
+                    - {{ item.description }}
+                </div>
+                <time>{{ item.created_at|date:'d M Y, h:i A' }}</time>
+            </li>
+        {% empty %}
+            <li>No history records yet.</li>
+        {% endfor %}
+    </ul>
+    {% include 'partials/pagination.html' %}
+</section>
+{% endblock %}
