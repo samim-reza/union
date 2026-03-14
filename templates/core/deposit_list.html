@@ -1,36 +1,46 @@
 {% extends 'base.html' %}
-{% block title %}Deposits | Union Manager{% endblock %}
+{% block title %}Deposits | Union Ledger{% endblock %}
 {% block content %}
-<section class="panel reveal">
-    <div class="panel-head">
-        <h1>Deposit History</h1>
-        <div class="action-row compact">
-            <a class="btn btn-secondary" href="{% url 'deposit-list' %}">All</a>
-            <a class="btn btn-secondary" href="{% url 'deposit-list' %}?mine=1">Mine</a>
-            <a class="btn btn-primary" href="{% url 'create-deposit' %}">Add Deposit</a>
+<section class="hero reveal">
+    <h1>💸 Deposits</h1>
+    <p>Review union deposits and pending approvals.</p>
+</section>
+<section class="panel">
+    <div class="action-row compact" style="margin-top: 0; margin-bottom: 1.5rem; padding-bottom: 0; border: none;">
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <a href="?mine=1" class="btn {% if show_mine %}btn-primary{% else %}btn-secondary{% endif %}">My Deposits</a>
+            <a href="?" class="btn {% if not show_mine %}btn-primary{% else %}btn-secondary{% endif %}">All Deposits</a>
         </div>
+        <span style="flex: 1;"></span>
+        <a class="btn btn-primary" href="{% url 'create-deposit' %}">➕ New Deposit</a>
     </div>
 
     <div class="table-wrap">
         <table>
             <thead>
                 <tr>
-                    <th>Member</th>
+                    <th>ID</th>
+                    <th>Depositor</th>
+                    <th>Receiver</th>
                     <th>Amount</th>
-                    <th>Note</th>
-                    <th>Date & Time</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
                 {% for deposit in page_obj %}
                     <tr>
+                        <td>#{{ deposit.pk }}</td>
                         <td>{{ deposit.user.get_full_name|default:deposit.user.username }}</td>
+                        <td>{{ deposit.receiver.get_full_name|default:"-" }}</td>
                         <td>৳{{ deposit.amount }}</td>
-                        <td>{{ deposit.note|default:'-' }}</td>
-                        <td>{{ deposit.created_at|date:'d M Y, h:i A' }}</td>
+                        <td><span class="status {{ deposit.status|lower }}">{{ deposit.get_status_display }}</span></td>
+                        <td>{{ deposit.created_at|date:'d M Y' }}</td>
+                        <td><a href="{% url 'deposit-detail' deposit.pk %}">Open</a></td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="4">No deposits found.</td></tr>
+                    <tr><td colspan="7">No deposits found.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

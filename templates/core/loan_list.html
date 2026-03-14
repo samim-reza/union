@@ -1,10 +1,14 @@
 {% extends 'base.html' %}
-{% block title %}Loans | Union Manager{% endblock %}
+{% block title %}Loans | Union Ledger{% endblock %}
 {% block content %}
-<section class="panel reveal">
-    <div class="panel-head">
-        <h1>Loan Requests</h1>
-        <a class="btn btn-primary" href="{% url 'create-loan-request' %}">New Borrow Request</a>
+<section class="hero reveal">
+    <h1>📋 Loan Requests</h1>
+    <p>Review and vote on member borrow requests</p>
+</section>
+<section class="panel">
+    <div class="action-row compact" style="margin-top: 0; margin-bottom: 1.5rem; padding-bottom: 0; border: none;">
+        <span style="flex: 1;"></span>
+        <a class="btn btn-primary" href="{% url 'create-loan-request' %}">📤 New Borrow Request</a>
     </div>
 
     <div class="table-wrap">

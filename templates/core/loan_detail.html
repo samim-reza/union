@@ -1,27 +1,54 @@
 {% extends 'base.html' %}
-{% block title %}Loan #{{ loan.pk }} | Union Manager{% endblock %}
+{% block title %}Loan #{{ loan.pk }} | Union Ledger{% endblock %}
 {% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{% url 'loan-list' %}" style="color: var(--primary); font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem;">&larr; Back to Loans</a>
+</div>
 <section class="panel reveal">
-    <h1>Loan Request #{{ loan.pk }}</h1>
+    <h1 style="margin-bottom: 1.5rem;">📋 Loan Request #{{ loan.pk }}</h1>
     <div class="grid cards compact-grid">
         <article class="card">
-            <h3>Applicant</h3>
-            <p>{{ loan.applicant.get_full_name|default:loan.applicant.username }}</p>
+            <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">👤 Applicant</h4>
+            <p style="margin: 0; font-weight: 600;">{{ loan.applicant.first_name }} {{ loan.applicant.last_name }}</p>
+            <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--ink-secondary);">@{{ loan.applicant.username }}</p>
         </article>
         <article class="card">
-            <h3>Amount</h3>
-            <p>৳{{ loan.amount }}</p>
+            <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">💰 Amount</h4>
+            <p style="margin: 0; font-weight: 600; font-size: 1.5rem; color: var(--primary);">৳{{ loan.amount }}</p>
         </article>
         <article class="card">
-            <h3>Status</h3>
-            <p><span class="status {{ loan.status|lower }}">{{ loan.get_status_display }}</span></p>
+            <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">Status</h4>
+            <p style="margin: 0;"><span class="status {{ loan.status|lower }}">{{ loan.get_status_display }}</span></p>
         </article>
         <article class="card">
-            <h3>Votes Needed</h3>
-            <p>{{ required_votes }}</p>
+            <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">✅ Votes (Yes/Needed)</h4>
+            <p style="margin: 0; font-weight: 600;">{{ loan.yes_votes }} / {{ required_votes }}</p>
         </article>
     </div>
-    <p><strong>Purpose:</strong> {{ loan.purpose }}</p>
+    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+        <h3 style="margin-top: 0;">Purpose</h3>
+        <p style="color: var(--ink-secondary); line-height: 1.8;">{{ loan.purpose }}</p>
+    </div>
+
+    
+    {% if loan.status == 'APPROVED' %}
+        <div style="margin-top: 2rem; padding: 1.5rem; background: var(--surface); border-radius: 8px;">
+            <h3>Repayments</h3>
+            <ul class="timeline" style="margin-bottom: 1rem;">
+                {% for rep in loan.repayments.all %}
+                    <li>
+                        <div><strong>৳{{ rep.amount }}</strong> - <span class="status {{ rep.status|lower }}">{{ rep.get_status_display }}</span></div>
+                        <time>{{ rep.created_at|date:'d M Y, h:i A' }}</time>
+                    </li>
+                {% empty %}
+                    <li>No repayments have been made yet.</li>
+                {% endfor %}
+            </ul>
+            {% if request.user == loan.applicant %}
+                <a href="{% url 'loan-repay' loan.pk %}" class="btn btn-secondary" style="display: inline-block;">💵 Initiate Repayment</a>
+            {% endif %}
+        </div>
+    {% endif %}
 
     {% if can_vote %}
         <section class="panel soft-panel">

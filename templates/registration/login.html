@@ -1,13 +1,27 @@
 {% extends 'base.html' %}
-{% block title %}Login | Union Manager{% endblock %}
+{% block title %}Login | Union Ledger{% endblock %}
 {% block content %}
-<section class="auth-card reveal">
-    <h1>Welcome Back</h1>
-    <p class="subtle">Sign in to manage deposits, votes, and loan requests.</p>
-    <form method="post" class="stack-form">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Login</button>
-    </form>
-</section>
+<div style="min-height: calc(100vh - 70px); display: grid; place-items: center; padding: 2rem;">
+    <section class="auth-card reveal" style="width: 100%; max-width: 420px;">
+        <h1 style="text-align: center; font-size: 2rem; margin-bottom: 0.5rem;">Welcome Back</h1>
+        <p class="subtle" style="text-align: center; margin-bottom: 2rem;">Sign in to manage deposits, votes, and loan requests.</p>
+        <form method="post" class="stack-form">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div style="color: var(--danger); padding: 1rem; background: #fee2e2; border-radius: 8px; margin-bottom: 1rem;">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            <div>
+                <label for="id_username" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Username</label>
+                <input type="text" name="username" id="id_username" required style="width: 100%;" placeholder="Enter your username">
+            </div>
+            <div>
+                <label for="id_password" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Password</label>
+                <input type="password" name="password" id="id_password" required style="width: 100%;" placeholder="Enter your password">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; text-align: center;">Sign In</button>
+        </form>
+    </section>
+</div>
 {% endblock %}

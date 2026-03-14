@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Update Profile | Union Ledger{% endblock %}
+{% block content %}
+<section class="hero reveal">
+    <h1>👤 Update Profile</h1>
+    <p>Update your personal details here.</p>
+</section>
+<section class="panel" style="max-width: 600px; margin: 0 auto;">
+    <form method="post" class="stack-form">
+        {% csrf_token %}
+        
+        <h3>Personal Details</h3>
+        {{ user_form.non_field_errors }}
+        {% for field in user_form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                <div class="error-text">{{ field.errors }}</div>
+            </div>
+        {% endfor %}
+        
+        <h3>Additional Info</h3>
+        {{ profile_form.non_field_errors }}
+        {% for field in profile_form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                <div class="error-text">{{ field.errors }}</div>
+            </div>
+        {% endfor %}
+
+        <h3>Change Password</h3>
+        <p style="font-size: 0.9rem; color: #666;">Leave blank if you do not want to change your password.</p>
+        {{ password_form.non_field_errors }}
+        {% for field in password_form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                <div class="error-text">{{ field.errors }}</div>
+            </div>
+        {% endfor %}
+        
+        <div class="action-row" style="margin-top: 1.5rem;">
+            <a href="{% url 'my-portal' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

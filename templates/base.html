@@ -4,16 +4,14 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Union Manager{% endblock %}</title>
+    <title>{% block title %}Union Ledger{% endblock %}</title>
+    <!-- Add Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/app.css' %}" />
 </head>
 <body>
-    <div class="bg-shape bg-shape-1"></div>
-    <div class="bg-shape bg-shape-2"></div>
-
     <header class="site-header">
         <a class="brand" href="{% url 'dashboard' %}">Union Ledger</a>
         {% if user.is_authenticated %}
@@ -22,16 +20,20 @@
                 <a href="{% url 'my-portal' %}">My Portal</a>
                 <a href="{% url 'deposit-list' %}">Deposits</a>
                 <a href="{% url 'loan-list' %}">Loans</a>
+                <a href="{% url 'policies' %}">Policies</a>
+                <a href="{% url 'decisions' %}">Decisions</a>
                 <a href="{% url 'activity-list' %}">History</a>
-                {% if user.is_staff or user.is_superuser %}
-                    <a href="{% url 'create-user' %}">Create User</a>
+                {% if user.username|lower == 'samim' or user.username|lower == 'arafat' %}
+                    <a href="{% url 'admin-portal' %}">Admin</a>
+                    <a href="{% url 'create-user' %}">➕ Create User</a>
                 {% endif %}
-                <a class="danger-link" href="{% url 'logout' %}">Logout</a>
+                <a href="{% url 'update-profile' %}" class="nav-user" style="color: var(--primary); font-weight: 600; text-decoration: none;">👤 {{ user.get_full_name|default:user.username }}</a>
+                <a class="danger-link" href="{% url 'logout' %}">🚪 Logout</a>
             </nav>
         {% endif %}
     </header>
 
-    <main class="container fade-in">
+    <main class="container">
         {% if messages %}
             <section class="flash-wrap">
                 {% for message in messages %}

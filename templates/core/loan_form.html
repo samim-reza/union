@@ -1,13 +1,20 @@
 {% extends 'base.html' %}
-{% block title %}Borrow Request | Union Manager{% endblock %}
+{% block title %}Borrow Request | Union Ledger{% endblock %}
 {% block content %}
-<section class="panel reveal">
-    <h1>Apply for Borrow</h1>
-    <p class="subtle">Members will get an email and can vote from their account.</p>
+<section class="panel reveal" style="max-width: 600px;">
+    <h1>📤 Apply for Borrow</h1>
+    <p class="subtle">Members will get an email notification and can vote from their account</p>
     <form method="post" class="stack-form">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Submit Request</button>
+        <div>
+            <label for="id_amount" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Amount (৳)</label>
+            {{ form.amount }}
+        </div>
+        <div>
+            <label for="id_purpose" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Purpose</label>
+            {{ form.purpose }}
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; text-align: center;">Submit Request</button>
     </form>
 </section>
 {% endblock %}

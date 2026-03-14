@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Decisions | Union Ledger{% endblock %}
+{% block content %}
+<section class="hero reveal">
+    <h1>⚖️ Decisions & Notifications</h1>
+    <p>Review pending deposits, loans, and repayments.</p>
+</section>
+
+<section class="panel">
+    <h3>Pending Deposits</h3>
+    {% if pending_deposits %}
+        <ul class="timeline">
+            {% for dep in pending_deposits %}
+                <li>
+                    <div><a href="{% url 'deposit-detail' dep.pk %}">Deposit #{{ dep.pk }}</a> by {{ dep.user.username }} for ৳{{ dep.amount }}</div>
+                    <time>{{ dep.created_at|date:'d M Y' }}</time>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No pending deposits.</p>
+    {% endif %}
+
+    <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);" />
+
+    <h3>Pending Loan Approvals</h3>
+    {% if pending_loans %}
+        <ul class="timeline">
+            {% for loan in pending_loans %}
+                <li>
+                    <div><a href="{% url 'loan-detail' loan.pk %}">Loan #{{ loan.pk }}</a> requested by {{ loan.applicant.username }} for ৳{{ loan.amount }}</div>
+                    <time>{{ loan.created_at|date:'d M Y' }}</time>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No pending loans.</p>
+    {% endif %}
+
+    <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);" />
+
+    <h3>Pending Loan Repayments</h3>
+    {% if pending_repayments %}
+        <ul class="timeline">
+            {% for rep in pending_repayments %}
+                <li>
+                    <div><a href="{% url 'loan-detail' rep.loan.pk %}">Repayment #{{ rep.pk }}</a> for Loan #{{ rep.loan.pk }} by {{ rep.loan.applicant.username }} for ৳{{ rep.amount }}</div>
+                    <time>{{ rep.created_at|date:'d M Y' }}</time>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No pending repayments.</p>
+    {% endif %}
+</section>
+{% endblock %}

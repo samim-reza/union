@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Deposit #{{ deposit.pk }} | Union Ledger{% endblock %}
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{% url 'deposit-list' %}" style="color: var(--primary); font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem;">&larr; Back to Deposits</a>
+</div>
+<section class="panel reveal">
+    <h1 style="margin-bottom: 1.5rem;">💎 Deposit Request #{{ deposit.pk }}</h1>
+    <div class="grid cards compact-grid">
+        <article class="card">
+            <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">👤 Depositor</h4>
+            <p style="margin: 0; font-weight: 600;">{{ deposit.user.first_name }} {{ deposit.user.last_name }}</p>
+            <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--ink-secondary);">@{{ deposit.user.username }}</p>
+        </article>
+        <article class="card">
+            <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">🏦 Receiver</h4>
+            <p style="margin: 0; font-weight: 600;">{{ deposit.receiver.first_name|default:"None" }} {{ deposit.receiver.last_name|default:"" }}</p>
+            <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--ink-secondary);">@{{ deposit.receiver.username|default:"-" }}</p>
+        </article>
+        <article class="card">
+            <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">💰 Amount</h4>
+            <p style="margin: 0; font-weight: 600; font-size: 1.5rem; color: var(--primary);">৳{{ deposit.amount }}</p>
+        </article>
+        <article class="card">
+            <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">Status</h4>
+            <p style="margin: 0;"><span class="status {{ deposit.status|lower }}">{{ deposit.get_status_display }}</span></p>
+        </article>
+        <article class="card">
+            <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">✅ Votes (Yes/Needed)</h4>
+            <p style="margin: 0; font-weight: 600;">{{ yes_votes }} / {{ required_votes }}</p>
+        </article>
+    </div>
+    {% if deposit.note %}
+    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+        <h3 style="margin-top: 0;">Note</h3>
+        <p style="color: var(--ink-secondary); line-height: 1.8;">{{ deposit.note }}</p>
+    </div>
+    {% endif %}
+
+    {% if can_vote %}
+        <section class="panel soft-panel" style="margin-top: 2rem;">
+            <h2>Confirm This Deposit</h2>
+            <form method="post" action="{% url 'vote-on-deposit' deposit.pk %}" class="stack-form">
+                {% csrf_token %}
+                {{ vote_form.as_p }}
+                <button type="submit" class="btn btn-primary">Submit Vote</button>
+            </form>
+        </section>
+    {% endif %}
+
+    <section class="panel soft-panel" style="margin-top: 2rem;">
+        <h2>Votes</h2>
+        <ul class="timeline">
+            {% for vote in votes %}
+                <li>
+                    <div>
+                        <strong>{{ vote.voter.get_full_name|default:vote.voter.username }}</strong>
+                        voted <strong>{{ vote.get_decision_display }}</strong>
+                        {% if vote.comment %} - {{ vote.comment }}{% endif %}
+                    </div>
+                    <time>{{ vote.created_at|date:'d M Y, h:i A' }}</time>
+                </li>
+            {% empty %}
+                <li>No votes submitted yet.</li>
+            {% endfor %}
+        </ul>
+    </section>
+</section>
+{% endblock %}

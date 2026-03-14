@@ -1,12 +1,20 @@
 {% extends 'base.html' %}
-{% block title %}New Deposit | Union Manager{% endblock %}
+{% block title %}New Deposit | Union Ledger{% endblock %}
 {% block content %}
-<section class="panel reveal">
-    <h1>Deposit Money</h1>
+<section class="panel reveal" style="max-width: 500px;">
+    <h1>💸 Deposit Money</h1>
+    <p class="subtle">Add funds to the union account</p>
     <form method="post" class="stack-form">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Save Deposit</button>
+        <div>
+            <label for="id_amount" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Amount (৳)</label>
+            {{ form.amount }}
+        </div>
+        <div>
+            <label for="id_note" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Note (Optional)</label>
+            {{ form.note }}
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; text-align: center;">Save Deposit</button>
     </form>
 </section>
 {% endblock %}

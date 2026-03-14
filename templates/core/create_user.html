@@ -1,13 +1,36 @@
 {% extends 'base.html' %}
-{% block title %}Create User | Union Manager{% endblock %}
+{% block title %}Create User | Union Ledger{% endblock %}
 {% block content %}
-<section class="panel reveal">
-    <h1>Create New Member Account</h1>
-    <p class="subtle">Only admin members can access this page.</p>
+<section class="panel reveal" style="max-width: 600px;">
+    <h1>➕ Create New Member Account</h1>
+    <p class="subtle">Only admin members can access this page</p>
     <form method="post" class="stack-form">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Create User</button>
+        <div>
+            <label for="id_username" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Username</label>
+            {{ form.username }}
+        </div>
+        <div>
+            <label for="id_first_name" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">First Name</label>
+            {{ form.first_name }}
+        </div>
+        <div>
+            <label for="id_last_name" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Last Name</label>
+            {{ form.last_name }}
+        </div>
+        <div>
+            <label for="id_email" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Email</label>
+            {{ form.email }}
+        </div>
+        <div>
+            <label for="id_password1" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Password</label>
+            {{ form.password1 }}
+        </div>
+        <div>
+            <label for="id_password2" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Confirm Password</label>
+            {{ form.password2 }}
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; text-align: center;">Create User</button>
     </form>
 </section>
 {% endblock %}

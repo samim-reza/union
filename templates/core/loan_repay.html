@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Repay Loan | Union Ledger{% endblock %}
+{% block content %}
+<section class="hero reveal">
+    <h1>💸 Repay Loan #{{ loan.pk }}</h1>
+    <p>Submit a return for your borrowed amount of ৳{{ loan.amount }}</p>
+</section>
+
+<section class="form-container panel reveal-delay-1">
+    <form method="post" class="stack-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                <div class="error-text">{{ field.errors }}</div>
+            </div>
+        {% endfor %}
+        <div class="action-row">
+            <a href="{% url 'loan-detail' loan.pk %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Submit Repayment</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

@@ -1,37 +1,37 @@
 {% extends 'base.html' %}
-{% block title %}My Portal | Union Manager{% endblock %}
+{% block title %}My Portal | Union Ledger{% endblock %}
 {% block content %}
 <section class="hero reveal">
-    <h1>My Portal</h1>
-    <p>Track your balance, deposits, and loan requests in one place.</p>
+    <h1>👤 {{ user.get_full_name|default:user.username }}'s Portal</h1>
+    <p>Track your balance, deposits, and loans in one place</p>
 </section>
 
 <section class="grid cards reveal-delay-1">
     <article class="card">
-        <h3>My Deposits</h3>
+        <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">💰 My Deposits</h4>
         <p class="metric">৳{{ my_total_deposits }}</p>
     </article>
     <article class="card">
-        <h3>My Approved Loans</h3>
+        <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">📌 Approved Loans</h4>
         <p class="metric">৳{{ my_approved_loans }}</p>
     </article>
     <article class="card">
-        <h3>My Net Balance</h3>
+        <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">💵 Net Balance</h4>
         <p class="metric">৳{{ my_balance }}</p>
     </article>
 </section>
 
 <section class="action-row reveal-delay-2">
-    <a class="btn btn-primary" href="{% url 'create-deposit' %}">Deposit Money</a>
-    <a class="btn btn-secondary" href="{% url 'create-loan-request' %}">Apply for Borrow</a>
-    <a class="btn btn-secondary" href="{% url 'deposit-list' %}?mine=1">See My Deposit History</a>
+    <a class="btn btn-primary" href="{% url 'create-deposit' %}">💸 Deposit Money</a>
+    <a class="btn btn-secondary" href="{% url 'create-loan-request' %}">📤 Apply for Borrow</a>
+    <a class="btn btn-secondary" href="{% url 'deposit-list' %}?mine=1">📊 View History</a>
 </section>
 
 <section class="two-col reveal-delay-3">
     <article class="panel">
-        <h2>My Recent Deposits</h2>
+        <h2>📝 My Recent Deposits</h2>
         <ul class="timeline">
-            {% for deposit in my_recent_deposits %}
+            {% for deposit in recent_deposits %}
                 <li>
                     <div><strong>৳{{ deposit.amount }}</strong> {% if deposit.note %}- {{ deposit.note }}{% endif %}</div>
                     <time>{{ deposit.created_at|date:'d M Y, h:i A' }}</time>
@@ -43,9 +43,9 @@
     </article>
 
     <article class="panel">
-        <h2>My Loan Requests</h2>
+        <h2>📋 My Loan Requests</h2>
         <ul class="timeline">
-            {% for loan in my_recent_loans %}
+            {% for loan in recent_loan_requests %}
                 <li>
                     <div>
                         <a href="{% url 'loan-detail' loan.pk %}">Loan #{{ loan.pk }}</a>

@@ -1,82 +1,161 @@
 {% extends 'base.html' %}
-{% block title %}Common Portal | Union Manager{% endblock %}
+{% block title %}Common Portal | Union Ledger{% endblock %}
 {% block content %}
 <section class="hero reveal">
-    <h1>Common Portal</h1>
-    <p>Live financial overview of the union.</p>
+    <h1>📊 Common Portal</h1>
+    <p>Welcome, <strong>{{ user.get_full_name|default:user.username }}</strong>. Here's the union's financial overview.</p>
 </section>
 
 <section class="grid cards reveal-delay-1">
     <article class="card">
-        <h3>Total Deposits</h3>
+        <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">💰 Total Deposits</h4>
         <p class="metric">৳{{ total_deposits }}</p>
     </article>
     <article class="card">
-        <h3>Total Borrowed</h3>
+        <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">📌 Total Borrowed</h4>
         <p class="metric">৳{{ total_borrowed }}</p>
     </article>
     <article class="card">
-        <h3>Available Balance</h3>
+        <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">💵 Available Balance</h4>
         <p class="metric">৳{{ union_balance }}</p>
     </article>
-    <article class="card">
-        <h3>Members</h3>
-        <p class="metric">{{ member_count }}</p>
-    </article>
 </section>
 
-<section class="panel reveal-delay-2">
-    <div class="panel-head">
-        <h2>Contribution Percentage</h2>
-        <a class="btn btn-secondary" href="{% url 'create-deposit' %}">Add Deposit</a>
-    </div>
-    <div class="stack-list">
-        {% for item in contributions %}
-            <div class="contribution-item">
-                <div class="contribution-text">
-                    <strong>{{ item.member.get_full_name|default:item.member.username }}</strong>
-                    <span>৳{{ item.total_contributed }} ({{ item.percentage }}%)</span>
-                </div>
-                <div class="bar-track">
-                    <div class="bar-fill" style="width: {{ item.percentage }}%"></div>
-                </div>
+<section class="two-col reveal-delay-2" style="align-items: start;">
+
+    <div style="display: grid; gap: 2rem; grid-template-columns: 1fr 1fr 1fr; justify-content: center;">
+
+        <article class="panel dark-panel" style="background: #1a2235; border: none; color: #ffffff; padding: 2rem; height: 800px; width: 400px;">
+            <div style="margin-bottom: 2rem;">
+                <h2 style="color: #ffffff; margin: 0; font-size: 1.25rem;">Contribution Share</h2>
+                <span style="color: #8da1b9; font-size: 0.9rem;">Per member %</span>
             </div>
-        {% empty %}
-            <p class="subtle">No contributions yet.</p>
-        {% endfor %}
+
+            <div style="width: 240px; margin: 0 auto 2rem; position: relative;">
+                <canvas id="contributionChart"></canvas>
+            </div>
+
+            <ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: 0.75rem;">
+                {% for item in contributions %}
+                <li style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <span class="legend-color-box" data-index="{{ forloop.counter0 }}"
+                            data-label="{{ item.member.get_full_name|default:item.member.username|escape }}"
+                            data-value="{{ item.percentage }}"
+                            style="width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span>
+                        <span style="color: #cbd5e1;">{{ item.member.get_full_name|default:item.member.username }}</span>
+                    </div>
+                    <span style="font-weight: 600; color: #ffffff;">{{ item.percentage }}%</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </article>
+
+        <article class="panel" style="height: 800px; overflow-y: auto; width: 400px;">
+            <h2>📝 Recent Deposits</h2>
+            <ul class="timeline">
+                {% for deposit in recent_deposits %}
+                    <li>
+                        <div>
+                            <strong>{{ deposit.user.get_full_name|default:deposit.user.username }}</strong>
+                            deposited <strong>৳{{ deposit.amount }}</strong>
+                        </div>
+                        <time>{{ deposit.created_at|date:'d M Y, h:i A' }}</time>
+                    </li>
+                {% empty %}
+                    <li>No deposits yet.</li>
+                {% endfor %}
+            </ul>
+        </article>
+
+        <article class="panel" style="height: 800px; overflow-y: auto; width: 400px;">
+            <h2>📋 Recent Activity</h2>
+            <ul class="timeline">
+                {% for activity in recent_activities %}
+                    <li>
+                        <div>{{ activity.description }}</div>
+                        <time>{{ activity.created_at|date:'d M Y, h:i A' }}</time>
+                    </li>
+                {% empty %}
+                    <li>No activity yet.</li>
+                {% endfor %}
+            </ul>
+        </article>
+
     </div>
 </section>
 
-<section class="two-col reveal-delay-3">
-    <article class="panel">
-        <h2>Recent Deposits</h2>
-        <ul class="timeline">
-            {% for deposit in recent_deposits %}
-                <li>
-                    <div>
-                        <strong>{{ deposit.user.get_full_name|default:deposit.user.username }}</strong>
-                        deposited <strong>৳{{ deposit.amount }}</strong>
-                    </div>
-                    <time>{{ deposit.created_at|date:'d M Y, h:i A' }}</time>
-                </li>
-            {% empty %}
-                <li>No deposits yet.</li>
-            {% endfor %}
-        </ul>
-    </article>
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <article class="panel">
-        <h2>Recent Activity</h2>
-        <ul class="timeline">
-            {% for activity in recent_activities %}
-                <li>
-                    <div>{{ activity.description }}</div>
-                    <time>{{ activity.created_at|date:'d M Y, h:i A' }}</time>
-                </li>
-            {% empty %}
-                <li>No activity yet.</li>
-            {% endfor %}
-        </ul>
-    </article>
-</section>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const labels = [];
+        const dataValues = [];
+
+        document.querySelectorAll('.legend-color-box').forEach(box => {
+            labels.push(box.dataset.label || 'Member');
+            dataValues.push(Number(box.dataset.value || 0));
+        });
+
+        const baseColors = [
+            '#8b5cf6', // Indigo/Purple
+            '#0ea5e9', // Cyan
+            '#10b981', // Emerald
+            '#f59e0b', // Amber/Yellow
+            '#ef4444', // Red/Pink
+            '#ec4899', // Pink
+            '#6366f1', // Pinkish
+            '#14b8a6', // Teal
+            '#3b82f6', // Blue
+            '#f97316', // Orange
+            '#84cc16'  // Light Green
+        ];
+
+        const chartCanvas = document.getElementById('contributionChart');
+        if (!chartCanvas) {
+            return;
+        }
+
+        const ctx = chartCanvas.getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: dataValues,
+                    backgroundColor: baseColors,
+                    borderWidth: 2,
+                    borderColor: '#1a2235', // Match the dark panel background
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                cutout: '70%',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false // Hide default legend as we made a custom one
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ' ' + context.label + ': ' + context.parsed + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Color the custom legend items
+        document.querySelectorAll('.legend-color-box').forEach(box => {
+            const idx = parseInt(box.getAttribute('data-index'));
+            if (!isNaN(idx) && baseColors[idx]) {
+                box.style.backgroundColor = baseColors[idx % baseColors.length];
+            }
+        });
+    });
+</script>
 {% endblock %}

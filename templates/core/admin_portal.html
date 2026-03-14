@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% block title %}Admin Portal | Union Ledger{% endblock %}
+{% block content %}
+<section class="hero reveal">
+    <h1>Admin Portal</h1>
+    <p>Only samim and arafat can access this page to manage members.</p>
+</section>
+
+<section class="panel reveal-delay-1">
+    <div class="panel-head">
+        <h2>Member Management</h2>
+        <a class="btn btn-primary" href="{% url 'create-user' %}">Add New Member</a>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Role</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in users %}
+                    <tr>
+                        <td>{{ member.username }}</td>
+                        <td>{{ member.get_full_name|default:'-' }}</td>
+                        <td>{{ member.email|default:'-' }}</td>
+                        <td>
+                            {% if member.is_active %}
+                                <span class="status approved">Active</span>
+                            {% else %}
+                                <span class="status rejected">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if member.username|lower == 'samim' or member.username|lower == 'arafat' %}
+                                <span class="status pending">Admin</span>
+                            {% else %}
+                                <span>Member</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if member.username|lower == 'samim' or member.username|lower == 'arafat' %}
+                                <span class="subtle">Protected</span>
+                            {% elif member.is_active %}
+                                <form method="post" action="{% url 'deactivate-user' member.id %}" style="margin:0;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-secondary">Remove</button>
+                                </form>
+                            {% else %}
+                                <span class="subtle">Removed</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6">No users found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="panel reveal-delay-2">
+    <h2 style="margin-bottom: 1rem;">Pending Approvals (Admin Delete)</h2>
+
+    <h3 style="margin-bottom: 0.75rem;">Deposits</h3>
+    <ul class="timeline" style="margin-bottom: 1.5rem;">
+        {% for item in pending_deposits %}
+            <li>
+                <div>
+                    <strong>Deposit #{{ item.pk }}</strong> by {{ item.user.get_full_name|default:item.user.username }} for ৳{{ item.amount }}
+                </div>
+                <form method="post" action="{% url 'delete-pending-deposit' item.pk %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-secondary">Delete</button>
+                </form>
+            </li>
+        {% empty %}
+            <li>No pending deposits.</li>
+        {% endfor %}
+    </ul>
+
+    <h3 style="margin-bottom: 0.75rem;">Loans</h3>
+    <ul class="timeline" style="margin-bottom: 1.5rem;">
+        {% for item in pending_loans %}
+            <li>
+                <div>
+                    <strong>Loan #{{ item.pk }}</strong> by {{ item.applicant.get_full_name|default:item.applicant.username }} for ৳{{ item.amount }}
+                </div>
+                <form method="post" action="{% url 'delete-pending-loan' item.pk %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-secondary">Delete</button>
+                </form>
+            </li>
+        {% empty %}
+            <li>No pending loans.</li>
+        {% endfor %}
+    </ul>
+
+    <h3 style="margin-bottom: 0.75rem;">Repayments</h3>
+    <ul class="timeline">
+        {% for item in pending_repayments %}
+            <li>
+                <div>
+                    <strong>Repayment #{{ item.pk }}</strong> for Loan #{{ item.loan.pk }} by {{ item.loan.applicant.get_full_name|default:item.loan.applicant.username }}
+                </div>
+                <form method="post" action="{% url 'delete-pending-repayment' item.pk %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-secondary">Delete</button>
+                </form>
+            </li>
+        {% empty %}
+            <li>No pending repayments.</li>
+        {% endfor %}
+    </ul>
+</section>
+
+<section class="panel reveal-delay-3">
+    <h2 style="margin-bottom: 1rem;">History Controls</h2>
+    <ul class="timeline">
+        {% for item in recent_activities %}
+            <li>
+                <div>
+                    {% if item.actor %}
+                        <strong>{{ item.actor.get_full_name|default:item.actor.username }}</strong>
+                    {% else %}
+                        <strong>System</strong>
+                    {% endif %}
+                    - {{ item.description }}
+                </div>
+                <form method="post" action="{% url 'delete-activity' item.pk %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-secondary">Delete</button>
+                </form>
+            </li>
+        {% empty %}
+            <li>No history records found.</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endblock %}

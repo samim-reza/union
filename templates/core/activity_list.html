@@ -1,16 +1,31 @@
 {% extends 'base.html' %}
-{% block title %}History | Union Manager{% endblock %}
+{% block title %}History | Union Ledger{% endblock %}
 {% block content %}
-<section class="panel reveal">
-    <h1>Action History</h1>
+<section class="hero reveal">
+    <h1>📋 Action History</h1>
+    <p>Track all activities and changes made in the union</p>
+</section>
+<section class="panel">
     <ul class="timeline">
         {% for item in page_obj %}
             <li>
                 <div>
-                    <strong>{{ item.actor.get_full_name|default:item.actor.username|default:'System' }}</strong>
+                    {% if item.actor %}
+                        <strong>{{ item.actor.get_full_name|default:item.actor.username }}</strong>
+                    {% else %}
+                        <strong>System</strong>
+                    {% endif %}
                     - {{ item.description }}
                 </div>
-                <time>{{ item.created_at|date:'d M Y, h:i A' }}</time>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <time>{{ item.created_at|date:'d M Y, h:i A' }}</time>
+                    {% if request.user.username|lower == 'samim' or request.user.username|lower == 'arafat' %}
+                        <form method="post" action="{% url 'delete-activity' item.pk %}" style="margin:0;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-secondary">Delete</button>
+                        </form>
+                    {% endif %}
+                </div>
             </li>
         {% empty %}
             <li>No history records yet.</li>
