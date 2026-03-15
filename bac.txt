@@ -1,1 +1,0 @@
-for recent deposit, recent activity and contributin share follow the section grid cards reveal-delay-1 it was in a row in three column do how they are, make a way for these three card also do not change their width so much and do not make those card height so long make them scrollable
