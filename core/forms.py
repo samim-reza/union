@@ -1,13 +1,24 @@
 from django import forms
+from decimal import Decimal
+
 from django.contrib.auth import password_validation
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
-from decimal import Decimal
 
-from .models import Deposit, LoanRequest, LoanVote, DepositVote
+from .models import (
+    Deposit,
+    DepositVote,
+    InvestmentDecision,
+    InvestmentVote,
+    LoanRepayment,
+    LoanRequest,
+    LoanVote,
+    Profile,
+    RepaymentVote,
+)
 
 class AdminUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -20,7 +31,7 @@ class AdminUserCreationForm(UserCreationForm):
         self.fields['password1'].widget.attrs.update({'autocomplete': 'new-password'})
         self.fields['password2'].widget.attrs.update({'autocomplete': 'new-password'})
 
-    class Meta(UserCreationForm.Meta):
+    class Meta:
         model = User
         fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2')
 
@@ -57,7 +68,8 @@ class LoanRequestForm(forms.ModelForm):
         self.fields['amount'].widget.attrs['max'] = str(int(union_balance))
         # adding a js onchange alert is also possible here with onchange parameter or just rely on max attribute which produces HTML5 popup.
         self.fields['amount'].widget.attrs['oninput'] = f"if(this.value > {int(union_balance)}) {{ alert('Maximum allowable requested amount is ৳{int(union_balance)}'); this.value = {int(union_balance)}; }}"
-def clean_amount(self):
+
+    def clean_amount(self):
         amount = self.cleaned_data.get('amount')
         if amount is not None:
             if amount % 1 != 0:
@@ -70,7 +82,7 @@ def clean_amount(self):
             
             if amount > union_balance:
                 raise ValidationError(f"You cannot request more than the current available balance (৳{union_balance:g}).")
-                
+
         return amount
 
 class LoanVoteForm(forms.ModelForm):
@@ -102,14 +114,11 @@ class UserUpdateForm(forms.ModelForm):
 class ProfileUpdateForm(forms.ModelForm):
     # For updating Profile fields
     class Meta:
-        from .models import Profile
         model = Profile
         fields = ('date_of_birth',)
         widgets = {
             'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
         }
-
-from .models import LoanRepayment, RepaymentVote
 
 class LoanRepaymentForm(forms.ModelForm):
     class Meta:
@@ -132,4 +141,49 @@ class RepaymentVoteForm(forms.ModelForm):
         fields = ('decision',)
         widgets = {
             'decision': forms.RadioSelect,
+        }
+
+
+class InvestmentDecisionForm(forms.ModelForm):
+    class Meta:
+        model = InvestmentDecision
+        fields = (
+            'invest_to',
+            'invested_amount',
+            'invested_on',
+            'received_amount',
+            'received_on',
+            'percentage_snapshot',
+            'note',
+        )
+        widgets = {
+            'invest_to': forms.TextInput(attrs={'placeholder': 'Example: OLI'}),
+            'invested_amount': forms.NumberInput(attrs={'step': '1', 'min': '1'}),
+            'invested_on': forms.DateInput(attrs={'type': 'date'}),
+            'received_amount': forms.NumberInput(attrs={'step': '1', 'min': '0'}),
+            'received_on': forms.DateInput(attrs={'type': 'date'}),
+            'percentage_snapshot': forms.Textarea(attrs={'rows': 5, 'placeholder': 'Paste member percentage breakdown here'}),
+            'note': forms.TextInput(attrs={'placeholder': 'Optional note'}),
+        }
+
+    def clean_invested_amount(self):
+        amount = self.cleaned_data.get('invested_amount')
+        if amount is not None and amount % 1 != 0:
+            raise ValidationError('Invested amount must be an integer.')
+        return amount
+
+    def clean_received_amount(self):
+        amount = self.cleaned_data.get('received_amount')
+        if amount is not None and amount % 1 != 0:
+            raise ValidationError('Received amount must be an integer.')
+        return amount
+
+
+class InvestmentVoteForm(forms.ModelForm):
+    class Meta:
+        model = InvestmentVote
+        fields = ('decision', 'comment')
+        widgets = {
+            'decision': forms.RadioSelect,
+            'comment': forms.TextInput(attrs={'placeholder': 'Optional comment'}),
         }

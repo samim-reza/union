@@ -3,7 +3,7 @@
 {% block content %}
 <section class="hero reveal">
     <h1>⚖️ Decisions & Notifications</h1>
-    <p>Review pending deposits, loans, and repayments.</p>
+    <p>Review pending deposits, loans, repayments, and investments.</p>
 </section>
 
 <section class="panel">
@@ -57,6 +57,28 @@
         </ul>
     {% else %}
         <p>No pending repayments.</p>
+    {% endif %}
+
+    <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);" />
+
+    <h3>Pending Investments</h3>
+    {% if pending_investments %}
+        <ul class="timeline">
+            {% for investment in pending_investments %}
+                <li class="decision-clickable" data-url="{% url 'investment-detail' investment.pk %}" role="link" tabindex="0">
+                    <div class="decision-item-link">
+                        <div>
+                            <strong>Investment #{{ investment.pk }}</strong>
+                            to {{ investment.invest_to }} for ৳{{ investment.invested_amount }}
+                            by {{ investment.creator.username }}
+                        </div>
+                        <time>{{ investment.created_at|date:'d M Y' }}</time>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No pending investments.</p>
     {% endif %}
 </section>
 

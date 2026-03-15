@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Investments | Union Ledger{% endblock %}
+{% block content %}
+<section class="hero reveal">
+    <h1>📊 Investment Decisions</h1>
+    <p>Track approved, pending, and rejected investment records.</p>
+</section>
+
+<section class="action-row compact reveal-delay-1">
+    <a class="btn btn-primary" href="{% url 'create-investment' %}">+ New Investment Decision</a>
+</section>
+
+<section class="panel reveal-delay-2">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Invest To</th>
+                    <th>Invested Amount</th>
+                    <th>Invested On</th>
+                    <th>Received Amount</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in page_obj %}
+                    <tr>
+                        <td>#{{ item.pk }}</td>
+                        <td>{{ item.invest_to }}</td>
+                        <td>৳{{ item.invested_amount }}</td>
+                        <td>{{ item.invested_on|date:'d M Y' }}</td>
+                        <td>{% if item.received_amount %}৳{{ item.received_amount }}{% else %}-{% endif %}</td>
+                        <td><span class="status {{ item.status|lower }}">{{ item.get_status_display }}</span></td>
+                        <td><a href="{% url 'investment-detail' item.pk %}">View</a></td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7">No investments recorded yet.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+        <nav class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            {% endif %}
+            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">Next</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+</section>
+{% endblock %}

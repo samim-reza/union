@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Investment #{{ investment.pk }} | Union Ledger{% endblock %}
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{% url 'investment-list' %}" style="color: var(--primary); font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem;">&larr; Back to Investments</a>
+</div>
+
+<section class="panel reveal">
+    <h1 style="margin-bottom: 1.5rem;">📈 Investment #{{ investment.pk }}</h1>
+    <div class="grid cards compact-grid">
+        <article class="card">
+            <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">Invest To</h4>
+            <p style="margin: 0; font-weight: 600;">{{ investment.invest_to }}</p>
+        </article>
+        <article class="card">
+            <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">Invested Amount</h4>
+            <p style="margin: 0; font-weight: 600; font-size: 1.5rem; color: var(--primary);">৳{{ investment.invested_amount }}</p>
+        </article>
+        <article class="card">
+            <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">Status</h4>
+            <p style="margin: 0;"><span class="status {{ investment.status|lower }}">{{ investment.get_status_display }}</span></p>
+        </article>
+        <article class="card">
+            <h4 style="color: var(--ink-secondary); margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">Votes (Yes/Needed)</h4>
+            <p style="margin: 0; font-weight: 600;">{{ investment.yes_votes }} / {{ required_votes }}</p>
+        </article>
+    </div>
+
+    <section class="panel soft-panel" style="margin-top: 1.5rem;">
+        <p><strong>Proposed by:</strong> {{ investment.creator.get_full_name|default:investment.creator.username }}</p>
+        <p><strong>Invested on:</strong> {{ investment.invested_on|date:'d M Y' }}</p>
+        <p><strong>Received amount:</strong> {% if investment.received_amount %}৳{{ investment.received_amount }}{% else %}Not received yet{% endif %}</p>
+        <p><strong>Receive on:</strong> {% if investment.received_on %}{{ investment.received_on|date:'d M Y' }}{% else %}-{% endif %}</p>
+        {% if investment.note %}
+            <p><strong>Note:</strong> {{ investment.note }}</p>
+        {% endif %}
+        {% if investment.percentage_snapshot %}
+            <h3 style="margin-top: 1rem;">Percentage Snapshot</h3>
+            <pre style="white-space: pre-wrap; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; color: var(--ink-secondary);">{{ investment.percentage_snapshot }}</pre>
+        {% endif %}
+    </section>
+
+    {% if can_vote %}
+        <section class="panel soft-panel">
+            <h2>Vote on this Investment</h2>
+            <form method="post" action="{% url 'vote-on-investment' investment.pk %}" class="stack-form">
+                {% csrf_token %}
+                {{ vote_form.as_p }}
+                <button type="submit" class="btn btn-primary">Submit Vote</button>
+            </form>
+        </section>
+    {% elif user_vote %}
+        <p class="subtle">You already voted: <strong>{{ user_vote.get_decision_display }}</strong>.</p>
+    {% endif %}
+
+    <section class="panel soft-panel">
+        <h2>Votes</h2>
+        <ul class="timeline">
+            {% for vote in votes %}
+                <li>
+                    <div>
+                        <strong>{{ vote.voter.get_full_name|default:vote.voter.username }}</strong>
+                        voted <strong>{{ vote.get_decision_display }}</strong>
+                        {% if vote.comment %} - {{ vote.comment }}{% endif %}
+                    </div>
+                    <time>{{ vote.created_at|date:'d M Y, h:i A' }}</time>
+                </li>
+            {% empty %}
+                <li>No votes submitted yet.</li>
+            {% endfor %}
+        </ul>
+    </section>
+</section>
+{% endblock %}

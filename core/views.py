@@ -11,8 +11,16 @@ from django.db.models import Sum, Q
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import AdminUserCreationForm, DepositForm, LoanRequestForm, LoanVoteForm, DepositVoteForm
-from .models import ActivityLog, Deposit, LoanRequest, LoanVote, DepositVote, LoanRepayment
+from .forms import (
+	AdminUserCreationForm,
+	DepositForm,
+	LoanRequestForm,
+	LoanVoteForm,
+	DepositVoteForm,
+	InvestmentDecisionForm,
+	InvestmentVoteForm,
+)
+from .models import ActivityLog, Deposit, LoanRequest, LoanVote, DepositVote, LoanRepayment, InvestmentDecision, InvestmentVote
 
 
 def _is_admin(user):
@@ -71,15 +79,16 @@ def dashboard(request):
 
 	contributions = []
 	for member in contribution_rows:
+		member_total = getattr(member, 'total_contributed', Decimal('0.00'))
 		percentage = (
-			(member.total_contributed / total_deposits) * 100
+			(member_total / total_deposits) * 100
 			if total_deposits > 0
 			else Decimal('0.00')
 		)
 		contributions.append(
 			{
 				'member': member,
-				'total_contributed': member.total_contributed,
+				'total_contributed': member_total,
 				'percentage': round(percentage, 2),
 			}
 		)
@@ -212,6 +221,132 @@ def loan_list(request):
 
 
 @login_required
+def investment_list(request):
+	investments = InvestmentDecision.objects.select_related('creator').all()
+	paginator = Paginator(investments, 10)
+	page_obj = paginator.get_page(request.GET.get('page'))
+	return render(request, 'core/investment_list.html', {'page_obj': page_obj})
+
+
+@login_required
+def create_investment(request):
+	if request.method == 'POST':
+		form = InvestmentDecisionForm(request.POST)
+		if form.is_valid():
+			investment = form.save(commit=False)
+			investment.creator = request.user
+			investment.save()
+			_create_activity(
+				request.user,
+				ActivityLog.Action.INVESTMENT_CREATED,
+				f"{request.user.username} proposed investment #{investment.pk} to {investment.invest_to}.",
+			)
+			_notify_members_for_approval(
+				request.user,
+				f"Investment Approval Needed: {investment.invest_to}",
+				(
+					f"A new investment decision has been proposed by "
+					f"{request.user.get_full_name() or request.user.username}.\n\n"
+					f"Invest to: {investment.invest_to}\n"
+					f"Invested amount: {investment.invested_amount}\n"
+					f"Invested on: {investment.invested_on}\n\n"
+					"Please login and vote on this investment decision."
+				),
+			)
+			messages.success(request, 'Investment decision submitted for approval.')
+			return redirect('investment-detail', pk=investment.pk)
+	else:
+		form = InvestmentDecisionForm()
+
+	return render(request, 'core/investment_form.html', {'form': form})
+
+
+@login_required
+def investment_detail(request, pk):
+	investment = get_object_or_404(InvestmentDecision.objects.select_related('creator'), pk=pk)
+	user_vote = InvestmentVote.objects.filter(investment=investment, voter=request.user).first()
+	total_members = User.objects.filter(is_active=True).count()
+	required_votes = (total_members // 2) + 1
+	can_vote = request.user != investment.creator and user_vote is None and investment.status == InvestmentDecision.Status.PENDING
+
+	return render(
+		request,
+		'core/investment_detail.html',
+		{
+			'investment': investment,
+			'votes': InvestmentVote.objects.filter(investment=investment).select_related('voter'),
+			'user_vote': user_vote,
+			'can_vote': can_vote,
+			'vote_form': InvestmentVoteForm(),
+			'required_votes': required_votes,
+		},
+	)
+
+
+@login_required
+def vote_on_investment(request, pk):
+	investment = get_object_or_404(InvestmentDecision, pk=pk)
+	if request.user == investment.creator:
+		messages.error(request, 'You cannot vote on your own investment decision.')
+		return redirect('investment-detail', pk=investment.pk)
+
+	if investment.status != InvestmentDecision.Status.PENDING:
+		messages.error(request, 'Voting is closed for this investment decision.')
+		return redirect('investment-detail', pk=investment.pk)
+
+	if request.method != 'POST':
+		return redirect('investment-detail', pk=investment.pk)
+
+	form = InvestmentVoteForm(request.POST)
+	if not form.is_valid():
+		messages.error(request, 'Invalid vote submission.')
+		return redirect('investment-detail', pk=investment.pk)
+
+	with transaction.atomic():
+		existing_vote = InvestmentVote.objects.filter(investment=investment, voter=request.user).exists()
+		if existing_vote:
+			messages.warning(request, 'You already voted on this investment decision.')
+			return redirect('investment-detail', pk=investment.pk)
+
+		vote = InvestmentVote.objects.create(
+			investment=investment,
+			voter=request.user,
+			decision=form.cleaned_data['decision'],
+			comment=form.cleaned_data.get('comment', ''),
+		)
+
+		_create_activity(
+			request.user,
+			ActivityLog.Action.INVESTMENT_VOTED,
+			f"{request.user.username} voted {vote.decision.lower()} on investment #{investment.pk}.",
+		)
+
+		total_members = User.objects.filter(is_active=True).count()
+		required_votes = (total_members // 2) + 1
+		yes_votes = investment.yes_votes
+		no_votes = investment.no_votes
+
+		old_status = investment.status
+		if yes_votes >= required_votes:
+			investment.status = InvestmentDecision.Status.APPROVED
+		elif no_votes >= required_votes:
+			investment.status = InvestmentDecision.Status.REJECTED
+		elif yes_votes + no_votes >= total_members - 1 and yes_votes <= no_votes:
+			investment.status = InvestmentDecision.Status.REJECTED
+
+		if investment.status != old_status:
+			investment.save(update_fields=['status', 'updated_at'])
+			_create_activity(
+				request.user,
+				ActivityLog.Action.INVESTMENT_STATUS_CHANGED,
+				f"Investment #{investment.pk} status changed to {investment.status}.",
+			)
+
+	messages.success(request, 'Your vote has been recorded.')
+	return redirect('investment-detail', pk=investment.pk)
+
+
+@login_required
 def deposit_list(request):
 	deposits = Deposit.objects.select_related('user').all()
 	show_mine = request.GET.get('mine')
@@ -240,7 +375,7 @@ def loan_detail(request, pk):
 
 	context = {
 		'loan': loan,
-		'votes': loan.votes.select_related('voter').all(),
+		'votes': LoanVote.objects.filter(loan_request=loan).select_related('voter'),
 		'user_vote': user_vote,
 		'can_vote': can_vote,
 		'vote_form': LoanVoteForm(),
@@ -327,75 +462,75 @@ def custom_logout(request):
 
 @login_required
 def deposit_detail(request, pk):
-        deposit = get_object_or_404(Deposit.objects.select_related('user', 'receiver'), pk=pk)
-        user_vote = DepositVote.objects.filter(deposit=deposit, voter=request.user).first()
-        
-        yes_votes = deposit.votes.filter(decision=DepositVote.Decision.APPROVE).count()
-        required_votes = 2
-        
-        can_vote = request.user != deposit.user and user_vote is None and deposit.status == Deposit.Status.PENDING
-        
-        context = {
-                'deposit': deposit,
-                'votes': deposit.votes.select_related('voter').all(),
-                'yes_votes': yes_votes,
-                'required_votes': required_votes,
-                'can_vote': can_vote,
-                'vote_form': DepositVoteForm(),
-        }
-        return render(request, 'core/deposit_detail.html', context)
+	deposit = get_object_or_404(Deposit.objects.select_related('user', 'receiver'), pk=pk)
+	user_vote = DepositVote.objects.filter(deposit=deposit, voter=request.user).first()
+
+	yes_votes = DepositVote.objects.filter(deposit=deposit, decision=DepositVote.Decision.APPROVE).count()
+	required_votes = 2
+
+	can_vote = request.user != deposit.user and user_vote is None and deposit.status == Deposit.Status.PENDING
+
+	context = {
+		'deposit': deposit,
+		'votes': DepositVote.objects.filter(deposit=deposit).select_related('voter'),
+		'yes_votes': yes_votes,
+		'required_votes': required_votes,
+		'can_vote': can_vote,
+		'vote_form': DepositVoteForm(),
+	}
+	return render(request, 'core/deposit_detail.html', context)
 
 @login_required
 def vote_on_deposit(request, pk):
-        deposit = get_object_or_404(Deposit, pk=pk)
-        if request.user == deposit.user:
-                messages.error(request, 'You cannot vote on your own deposit.')
-                return redirect('deposit-detail', pk=deposit.pk)
+	deposit = get_object_or_404(Deposit, pk=pk)
+	if request.user == deposit.user:
+		messages.error(request, 'You cannot vote on your own deposit.')
+		return redirect('deposit-detail', pk=deposit.pk)
 
-        if deposit.status != Deposit.Status.PENDING:
-                messages.error(request, 'This deposit is no longer pending.')
-                return redirect('deposit-detail', pk=deposit.pk)
+	if deposit.status != Deposit.Status.PENDING:
+		messages.error(request, 'This deposit is no longer pending.')
+		return redirect('deposit-detail', pk=deposit.pk)
 
-        existing_vote = DepositVote.objects.filter(deposit=deposit, voter=request.user).first()
-        if existing_vote:
-                messages.warning(request, 'You have already voted on this deposit.')
-                return redirect('deposit-detail', pk=deposit.pk)
+	existing_vote = DepositVote.objects.filter(deposit=deposit, voter=request.user).first()
+	if existing_vote:
+		messages.warning(request, 'You have already voted on this deposit.')
+		return redirect('deposit-detail', pk=deposit.pk)
 
-        if request.method == 'POST':
-                form = DepositVoteForm(request.POST)
-                if form.is_valid():
-                        vote = DepositVote(
-                                deposit=deposit,
-                                voter=request.user,
-                                decision=form.cleaned_data['decision']
-                        )
-                        vote.save()
-                        
-                        ActivityLog.objects.create(
-                                actor=request.user,
-                                action=ActivityLog.Action.LOAN_VOTED, # Reusing simple action for now
-                                description=f"Voted {vote.get_decision_display()} on deposit #{deposit.pk} by {deposit.user.username}"
-                        )
-                        
-                        yes_votes = deposit.votes.filter(decision=DepositVote.Decision.APPROVE).count()
-                        no_votes = deposit.votes.filter(decision=DepositVote.Decision.REJECT).count()
-                        
-                        if yes_votes >= 2:
-                                deposit.status = Deposit.Status.APPROVED
-                                deposit.save()
-                                ActivityLog.objects.create(
-                                        actor=None,
-                                        action=ActivityLog.Action.DEPOSIT_CREATED,
-                                        description=f"Deposit #{deposit.pk} approved and added to balance."
-                                )
-                        elif no_votes >= 2:
-                                deposit.status = Deposit.Status.REJECTED
-                                deposit.save()
-                                
-                        messages.success(request, 'Your vote has been recorded.')
-                else:
-                        messages.error(request, 'Invalid vote submission.')
-        return redirect('deposit-detail', pk=deposit.pk)
+	if request.method == 'POST':
+		form = DepositVoteForm(request.POST)
+		if form.is_valid():
+			vote = DepositVote(
+				deposit=deposit,
+				voter=request.user,
+				decision=form.cleaned_data['decision']
+			)
+			vote.save()
+
+			ActivityLog.objects.create(
+				actor=request.user,
+				action=ActivityLog.Action.LOAN_VOTED,  # Reusing simple action for now
+				description=f"Voted {vote.decision.lower()} on deposit #{deposit.pk} by {deposit.user.username}"
+			)
+
+			yes_votes = DepositVote.objects.filter(deposit=deposit, decision=DepositVote.Decision.APPROVE).count()
+			no_votes = DepositVote.objects.filter(deposit=deposit, decision=DepositVote.Decision.REJECT).count()
+
+			if yes_votes >= 2:
+				deposit.status = Deposit.Status.APPROVED
+				deposit.save()
+				ActivityLog.objects.create(
+					actor=None,
+					action=ActivityLog.Action.DEPOSIT_CREATED,
+					description=f"Deposit #{deposit.pk} approved and added to balance."
+				)
+			elif no_votes >= 2:
+				deposit.status = Deposit.Status.REJECTED
+				deposit.save()
+
+			messages.success(request, 'Your vote has been recorded.')
+		else:
+			messages.error(request, 'Invalid vote submission.')
+	return redirect('deposit-detail', pk=deposit.pk)
 
 from django.contrib import messages
 from django.db import transaction
@@ -405,30 +540,51 @@ from .forms import UserUpdateForm, ProfileUpdateForm
 
 @login_required
 def update_profile(request):
-    if request.method == 'POST':
-        user_form = UserUpdateForm(request.POST, instance=request.user)
-        profile_form = ProfileUpdateForm(request.POST, instance=request.user.profile)
-        password_form = PasswordChangeForm(request.user, request.POST)
-        
-        if user_form.is_valid() and profile_form.is_valid():
-            with transaction.atomic():
-                user_form.save()
-                profile_form.save()
-                if password_form.is_valid() and password_form.cleaned_data.get('old_password'):
-                    user = password_form.save()
-                    update_session_auth_hash(request, user)
-                messages.success(request, 'Your profile was successfully updated!')
-                return redirect('my-portal')
-    else:
-        user_form = UserUpdateForm(instance=request.user)
-        profile_form = ProfileUpdateForm(instance=request.user.profile)
-        password_form = PasswordChangeForm(request.user)
-        
-    return render(request, 'core/profile_update.html', {
-        'user_form': user_form,
-        'profile_form': profile_form,
-        'password_form': password_form
-    })
+	def _optionalize_password_fields(form):
+		for field_name in ('old_password', 'new_password1', 'new_password2'):
+			if field_name in form.fields:
+				form.fields[field_name].required = False
+				form.fields[field_name].widget.attrs.pop('required', None)
+		return form
+
+	if request.method == 'POST':
+		user_form = UserUpdateForm(request.POST, instance=request.user)
+		profile_form = ProfileUpdateForm(request.POST, instance=request.user.profile)
+		wants_password_change = any(
+			request.POST.get(field)
+			for field in ('old_password', 'new_password1', 'new_password2')
+		)
+		password_form = PasswordChangeForm(request.user, request.POST) if wants_password_change else _optionalize_password_fields(PasswordChangeForm(request.user))
+
+		user_valid = user_form.is_valid()
+		profile_valid = profile_form.is_valid()
+		password_valid = (not wants_password_change) or password_form.is_valid()
+
+		if user_valid and profile_valid and password_valid:
+			with transaction.atomic():
+				user_form.save()
+				profile_form.save()
+				if wants_password_change:
+					user = password_form.save()
+					update_session_auth_hash(request, user)
+			if wants_password_change:
+				messages.success(request, 'Profile updated and password changed successfully.')
+			else:
+				messages.success(request, 'Your profile was successfully updated!')
+			return redirect('my-portal')
+
+		if wants_password_change and not password_valid:
+			messages.error(request, 'Password change failed. Please correct the password errors and try again.')
+	else:
+		user_form = UserUpdateForm(instance=request.user)
+		profile_form = ProfileUpdateForm(instance=request.user.profile)
+		password_form = _optionalize_password_fields(PasswordChangeForm(request.user))
+
+	return render(request, 'core/profile_update.html', {
+		'user_form': user_form,
+		'profile_form': profile_form,
+		'password_form': password_form
+	})
 
 
 @login_required
@@ -476,11 +632,17 @@ def decisions(request):
 		.select_related('loan', 'loan__applicant', 'receiver')
 		.order_by('-created_at')[:100]
 	)
+	pending_investments = (
+		InvestmentDecision.objects.filter(status=InvestmentDecision.Status.PENDING)
+		.select_related('creator')
+		.order_by('-created_at')[:100]
+	)
 
 	return render(request, 'core/decisions.html', {
 		'pending_deposits': pending_deposits,
 		'pending_loans': pending_loans,
-		'pending_repayments': pending_repayments
+		'pending_repayments': pending_repayments,
+		'pending_investments': pending_investments,
 	})
 
 

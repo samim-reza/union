@@ -26,6 +26,10 @@ urlpatterns = [
     path('loans/<int:pk>/', views.loan_detail, name='loan-detail'),
     path('loans/<int:pk>/vote/', views.vote_on_loan, name='vote-on-loan'),
     path('loans/<int:pk>/repay/', views.loan_repay, name='loan-repay'),
+    path('investments/', views.investment_list, name='investment-list'),
+    path('investments/new/', views.create_investment, name='create-investment'),
+    path('investments/<int:pk>/', views.investment_detail, name='investment-detail'),
+    path('investments/<int:pk>/vote/', views.vote_on_investment, name='vote-on-investment'),
     path('history/', views.activity_list, name='activity-list'),
     path(
         'login/',

@@ -121,6 +121,27 @@ a:hover {
     color: var(--ink);
 }
 
+.decisions-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.pending-badge {
+    min-width: 1.35rem;
+    height: 1.35rem;
+    border-radius: var(--radius-full);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.35rem;
+    background: var(--danger);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
 .danger-link { color: var(--danger) !important; }
 .danger-link:hover { background: #ffe4e6 !important; color: #be123c !important; }
 

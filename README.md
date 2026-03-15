@@ -1,76 +1,134 @@
 # Union Ledger (Django + PostgreSQL)
 
-A web app for a small friends union to manage deposits, borrowing requests, voting, and historical records.
+A web app for a small friends union to manage deposits, loans, repayments, investments, approvals, and activity history.
 
 ## Features
 
-- Admin-only user creation from in-app panel
-- Login for all users
-- Deposit money with timestamp and member identity
-- Borrow/loan request submission
-- Email notification to all members when a new loan request is created
-- Member voting on loan requests (approve/reject)
-- Automatic loan status updates based on majority vote
-- Common portal with total balance and contribution percentages
-- Personal portal with member-specific balance and history
-- Action history timeline (who did what)
-- Pagination for deposits, loans, and activity logs
-- Responsive modern UI
+- Role-gated admin portal (`samim` and `arafat`) for member management and cleanup actions
+- User profile completion flow (first name, email, date of birth) before normal app use
+- Deposit submission with approval voting and status tracking
+- Loan request submission with member voting and automatic status updates
+- Loan repayment submission with approval workflow
+- Investment decision module:
+	- Create/list/detail pages
+	- Voting (approve/reject)
+	- Automatic status updates by majority
+- Unified Decisions page for pending:
+	- Deposits
+	- Loans
+	- Repayments
+	- Investments
+- Decisions notification badge in top nav:
+	- hidden when 0
+	- shows count for 1-10
+	- shows `10+` above 10
+- Activity history timeline with admin delete actions
+- Responsive UI across desktop/mobile
+
+## Tech Stack
+
+- Django 5.x
+- PostgreSQL (Neon)
+- Gunicorn
+- WhiteNoise static serving
+- Optional SMTP email notifications
 
 ## Local Setup
 
-1. Create and activate virtual environment.
+1. Create and activate a virtual environment.
 2. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Copy `.env.example` to `.env` and update values.
+3. Copy env template and configure values:
+
+```bash
+cp .env.example .env
+```
+
 4. Run migrations:
 
 ```bash
 python manage.py migrate
 ```
 
-5. Create a superuser:
+5. (Optional) Create a Django superuser:
 
 ```bash
 python manage.py createsuperuser
 ```
 
-6. Run server:
+6. Start the app:
 
 ```bash
 python manage.py runserver
 ```
 
-## PostgreSQL
+## Environment Variables
 
-Set `DATABASE_URL` in your `.env` using this format:
+See `.env.example`.
+
+Required in production:
+
+- `DJANGO_SECRET_KEY`
+- `DEBUG=False`
+- `ALLOWED_HOSTS`
+- `CSRF_TRUSTED_ORIGINS`
+- `DATABASE_URL`
+
+Optional for email notifications:
+
+- `EMAIL_BACKEND`
+- `EMAIL_HOST`
+- `EMAIL_PORT`
+- `EMAIL_USE_TLS`
+- `EMAIL_HOST_USER`
+- `EMAIL_HOST_PASSWORD`
+- `DEFAULT_FROM_EMAIL`
+- `EMAIL_TIMEOUT`
+
+## Neon PostgreSQL
+
+Set `DATABASE_URL` in `.env`:
 
 ```bash
 postgresql://USER:PASSWORD@HOST.neon.tech/DBNAME?sslmode=require
 ```
 
-Neon connection strings usually include pooling and SSL query params. Use the exact value provided in your Neon dashboard.
+Use the exact pooled/direct connection string from Neon dashboard.
 
 ## Render Deployment
 
-1. Create a PostgreSQL project/database in Neon.
-2. Copy Neon connection string and keep `sslmode=require` in it.
-3. In Render, create a new Blueprint/Web service from this repository.
-4. In Render Environment Variables, set:
-	- `DATABASE_URL` = your Neon connection string
-	- `DJANGO_SECRET_KEY` = long random string
-	- `DEBUG` = `False`
-	- `ALLOWED_HOSTS` = `.onrender.com`
-	- `CSRF_TRUSTED_ORIGINS` = `https://<your-render-app>.onrender.com`
-5. Optional email variables for notifications:
-	- `EMAIL_BACKEND`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL`
-6. Deploy. Migrations and static collection run during build as configured in `render.yaml`.
+The repository includes `render.yaml`.
 
-## Important Notes
+Current build/start settings:
 
-- Users can only be created by staff/superuser from the app page (`/users/create/`) or Django admin.
-- For production, set a strong `DJANGO_SECRET_KEY` and keep `DEBUG=False`.
+- Build: `pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate`
+- Start: `gunicorn union_project.wsgi:application --workers 1 --threads 2 --timeout 120`
+
+Set Render env vars:
+
+- `DATABASE_URL` (Neon)
+- `DJANGO_SECRET_KEY`
+- `DEBUG=False`
+- `ALLOWED_HOSTS=.onrender.com`
+- `CSRF_TRUSTED_ORIGINS=https://<your-app>.onrender.com`
+
+## Main Routes
+
+- `/` dashboard
+- `/my/` my portal
+- `/deposits/` deposits
+- `/loans/` loans
+- `/investments/` investments
+- `/decisions/` pending approvals
+- `/history/` activity log
+- `/admin/` custom admin portal
+
+## Notes
+
+- User creation in app is restricted to allowed admin users.
+- Keep `DEBUG=False` in production.
+- Rotate default/shared passwords after initial data seeding.

@@ -20,8 +20,9 @@
                 <a href="{% url 'my-portal' %}">My Portal</a>
                 <a href="{% url 'deposit-list' %}">Deposits</a>
                 <a href="{% url 'loan-list' %}">Loans</a>
+                <a href="{% url 'investment-list' %}">Investments</a>
                 <a href="{% url 'policies' %}">Policies</a>
-                <a href="{% url 'decisions' %}">Decisions</a>
+                <a href="{% url 'decisions' %}" class="decisions-nav-link">Decisions{% if pending_decisions_badge %}<span class="pending-badge">{{ pending_decisions_badge }}</span>{% endif %}</a>
                 <a href="{% url 'activity-list' %}">History</a>
                 {% if user.username|lower == 'samim' or user.username|lower == 'arafat' %}
                     <a href="{% url 'admin-portal' %}">Admin</a>

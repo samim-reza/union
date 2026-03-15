@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}New Investment Decision | Union Ledger{% endblock %}
+{% block content %}
+<section class="hero reveal">
+    <h1>📈 New Investment Decision</h1>
+    <p>Submit an investment proposal for member approval.</p>
+</section>
+
+<section class="panel reveal-delay-1">
+    <form method="post" class="stack-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Submit for Approval</button>
+    </form>
+</section>
+{% endblock %}
