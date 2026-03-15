@@ -362,6 +362,26 @@ input:focus, textarea:focus, select:focus {
     border-color: var(--primary-light);
 }
 
+.decision-item-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    width: 100%;
+    color: inherit;
+}
+
+.timeline li.decision-clickable {
+    padding: 0;
+    cursor: pointer;
+}
+
+.timeline li.decision-clickable .decision-item-link {
+    padding: 1.5rem;
+    min-height: 100%;
+}
+
 time {
     color: var(--ink-secondary);
     font-size: 0.85rem;
@@ -477,6 +497,12 @@ tbody tr:last-child td { border-bottom: none; }
 .pagination span { color: var(--ink-secondary); font-weight: 600; }
 
 .subtle { color: #8fa099; }
+
+.error-text {
+    color: #b42318;
+    font-size: 0.9rem;
+    margin-top: 0.45rem;
+}
 
 .policy-panel {
     max-width: 980px;

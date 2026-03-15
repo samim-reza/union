@@ -6,29 +6,42 @@
     <p class="subtle">Only admin members can access this page</p>
     <form method="post" class="stack-form">
         {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="error-text">{{ form.non_field_errors }}</div>
+        {% endif %}
         <div>
             <label for="id_username" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Username</label>
             {{ form.username }}
+            <div class="error-text">{{ form.username.errors }}</div>
         </div>
         <div>
             <label for="id_first_name" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">First Name</label>
             {{ form.first_name }}
+            <div class="error-text">{{ form.first_name.errors }}</div>
         </div>
         <div>
             <label for="id_last_name" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Last Name</label>
             {{ form.last_name }}
+            <div class="error-text">{{ form.last_name.errors }}</div>
         </div>
         <div>
             <label for="id_email" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Email</label>
             {{ form.email }}
+            <div class="error-text">{{ form.email.errors }}</div>
         </div>
         <div>
             <label for="id_password1" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Password</label>
             {{ form.password1 }}
+            <p class="subtle" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">
+                Password must be at least 8 characters and include uppercase, lowercase, number, and symbol.
+            </p>
+            <div class="subtle" style="font-size: 0.9rem;">{{ form.password1.help_text|safe }}</div>
+            <div class="error-text">{{ form.password1.errors }}</div>
         </div>
         <div>
             <label for="id_password2" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Confirm Password</label>
             {{ form.password2 }}
+            <div class="error-text">{{ form.password2.errors }}</div>
         </div>
         <button type="submit" class="btn btn-primary" style="width: 100%; text-align: center;">Create User</button>
     </form>

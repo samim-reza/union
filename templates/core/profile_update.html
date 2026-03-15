@@ -31,6 +31,9 @@
 
         <h3>Change Password</h3>
         <p style="font-size: 0.9rem; color: #666;">Leave blank if you do not want to change your password.</p>
+        <p class="subtle" style="font-size: 0.9rem; margin-top: -0.3rem;">
+            Password should be at least 8 characters and include uppercase, lowercase, number, and symbol.
+        </p>
         {{ password_form.non_field_errors }}
         {% for field in password_form %}
             <div class="form-group">

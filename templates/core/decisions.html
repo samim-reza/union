@@ -11,9 +11,11 @@
     {% if pending_deposits %}
         <ul class="timeline">
             {% for dep in pending_deposits %}
-                <li>
-                    <div><a href="{% url 'deposit-detail' dep.pk %}">Deposit #{{ dep.pk }}</a> by {{ dep.user.username }} for ৳{{ dep.amount }}</div>
-                    <time>{{ dep.created_at|date:'d M Y' }}</time>
+                <li class="decision-clickable" data-url="{% url 'deposit-detail' dep.pk %}" role="link" tabindex="0">
+                    <div class="decision-item-link">
+                        <div><strong>Deposit #{{ dep.pk }}</strong> by {{ dep.user.username }} for ৳{{ dep.amount }}</div>
+                        <time>{{ dep.created_at|date:'d M Y' }}</time>
+                    </div>
                 </li>
             {% endfor %}
         </ul>
@@ -27,9 +29,11 @@
     {% if pending_loans %}
         <ul class="timeline">
             {% for loan in pending_loans %}
-                <li>
-                    <div><a href="{% url 'loan-detail' loan.pk %}">Loan #{{ loan.pk }}</a> requested by {{ loan.applicant.username }} for ৳{{ loan.amount }}</div>
-                    <time>{{ loan.created_at|date:'d M Y' }}</time>
+                <li class="decision-clickable" data-url="{% url 'loan-detail' loan.pk %}" role="link" tabindex="0">
+                    <div class="decision-item-link">
+                        <div><strong>Loan #{{ loan.pk }}</strong> requested by {{ loan.applicant.username }} for ৳{{ loan.amount }}</div>
+                        <time>{{ loan.created_at|date:'d M Y' }}</time>
+                    </div>
                 </li>
             {% endfor %}
         </ul>
@@ -43,9 +47,11 @@
     {% if pending_repayments %}
         <ul class="timeline">
             {% for rep in pending_repayments %}
-                <li>
-                    <div><a href="{% url 'loan-detail' rep.loan.pk %}">Repayment #{{ rep.pk }}</a> for Loan #{{ rep.loan.pk }} by {{ rep.loan.applicant.username }} for ৳{{ rep.amount }}</div>
-                    <time>{{ rep.created_at|date:'d M Y' }}</time>
+                <li class="decision-clickable" data-url="{% url 'loan-detail' rep.loan.pk %}" role="link" tabindex="0">
+                    <div class="decision-item-link">
+                        <div><strong>Repayment #{{ rep.pk }}</strong> for Loan #{{ rep.loan.pk }} by {{ rep.loan.applicant.username }} for ৳{{ rep.amount }}</div>
+                        <time>{{ rep.created_at|date:'d M Y' }}</time>
+                    </div>
                 </li>
             {% endfor %}
         </ul>
@@ -53,4 +59,20 @@
         <p>No pending repayments.</p>
     {% endif %}
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.decision-clickable[data-url]').forEach(function (row) {
+        row.addEventListener('click', function () {
+            window.location.href = row.dataset.url;
+        });
+        row.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                window.location.href = row.dataset.url;
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

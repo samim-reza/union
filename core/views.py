@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
+from django.conf import settings
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import transaction
@@ -23,18 +24,34 @@ def _create_activity(actor, action, description):
 
 
 def _notify_members_for_approval(actor, subject, body):
-	members = User.objects.filter(is_active=True)
+	queryset = User.objects.filter(is_active=True)
 	if actor is not None:
-		members = members.exclude(pk=actor.pk)
-	recipient_list = [member.email for member in members if member.email]
-	if recipient_list:
-		send_mail(
-			subject,
-			body,
-			'noreply@unionledger.com',
-			recipient_list,
-			fail_silently=True,
-		)
+		queryset = queryset.exclude(pk=actor.pk)
+
+	# Pull only email column and send in small batches to avoid memory spikes.
+	emails = []
+	for email in queryset.exclude(email='').values_list('email', flat=True).iterator(chunk_size=100):
+		if email and email not in emails:
+			emails.append(email)
+
+	if not emails:
+		return
+
+	from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@unionledger.com')
+	batch_size = 20
+	for i in range(0, len(emails), batch_size):
+		batch = emails[i:i + batch_size]
+		try:
+			send_mail(
+				subject,
+				body,
+				from_email,
+				batch,
+				fail_silently=True,
+			)
+		except Exception:
+			# Never block user actions if email provider is slow/unavailable.
+			continue
 
 
 @login_required
@@ -113,7 +130,8 @@ def create_user(request):
 			user = form.save()
 			_create_activity(request.user, ActivityLog.Action.USER_CREATED, f"User {user.username} created.")
 			messages.success(request, f"User {user.username} created successfully.")
-			return redirect('dashboard')
+			return redirect('create-user')
+		messages.error(request, 'Could not create user. Please fix the errors below.')
 	else:
 		form = AdminUserCreationForm()
 	return render(request, 'core/create_user.html', {'form': form})
@@ -443,15 +461,27 @@ def loan_repay(request, pk):
 
 @login_required
 def decisions(request):
-    pending_deposits = Deposit.objects.filter(status='PENDING')
-    pending_loans = LoanRequest.objects.filter(status='PENDING')
-    pending_repayments = LoanRepayment.objects.filter(status='PENDING')
-    
-    return render(request, 'core/decisions.html', {
-        'pending_deposits': pending_deposits,
-        'pending_loans': pending_loans,
-        'pending_repayments': pending_repayments
-    })
+	pending_deposits = (
+		Deposit.objects.filter(status=Deposit.Status.PENDING)
+		.select_related('user', 'receiver')
+		.order_by('-created_at')[:100]
+	)
+	pending_loans = (
+		LoanRequest.objects.filter(status=LoanRequest.Status.PENDING)
+		.select_related('applicant')
+		.order_by('-created_at')[:100]
+	)
+	pending_repayments = (
+		LoanRepayment.objects.filter(status=LoanRepayment.Status.PENDING)
+		.select_related('loan', 'loan__applicant', 'receiver')
+		.order_by('-created_at')[:100]
+	)
+
+	return render(request, 'core/decisions.html', {
+		'pending_deposits': pending_deposits,
+		'pending_loans': pending_loans,
+		'pending_repayments': pending_repayments
+	})
 
 
 @login_required

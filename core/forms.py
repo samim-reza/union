@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth import password_validation
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -12,6 +13,12 @@ class AdminUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
     first_name = forms.CharField(max_length=150, required=True)
     last_name = forms.CharField(max_length=150, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['password1'].help_text = password_validation.password_validators_help_text_html()
+        self.fields['password1'].widget.attrs.update({'autocomplete': 'new-password'})
+        self.fields['password2'].widget.attrs.update({'autocomplete': 'new-password'})
 
     class Meta(UserCreationForm.Meta):
         model = User
