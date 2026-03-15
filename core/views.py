@@ -67,8 +67,19 @@ def dashboard(request):
 	total_deposits = Deposit.objects.filter(status='APPROVED').aggregate(total=Coalesce(Sum('amount'), Decimal('0.00')))[
 		'total'
 	]
-	total_borrowed = LoanRequest.total_approved_amount()
-	union_balance = total_deposits - total_borrowed
+	total_approved_loans = LoanRequest.total_approved_amount()
+	total_repaid = LoanRepayment.objects.filter(status=LoanRepayment.Status.APPROVED).aggregate(
+		total=Coalesce(Sum('amount'), Decimal('0.00'))
+	)['total']
+	total_on_loan = total_approved_loans - total_repaid
+	total_invested = InvestmentDecision.objects.filter(status=InvestmentDecision.Status.APPROVED).aggregate(
+		total=Coalesce(Sum('invested_amount'), Decimal('0.00'))
+	)['total']
+	total_investment_withdrawn = InvestmentDecision.objects.filter(status=InvestmentDecision.Status.APPROVED).aggregate(
+		total=Coalesce(Sum('received_amount'), Decimal('0.00'))
+	)['total']
+	net_profit = total_investment_withdrawn - total_invested
+	on_hand = total_deposits - total_invested - total_on_loan
 
 	active_users = User.objects.filter(is_active=True)
 
@@ -98,8 +109,11 @@ def dashboard(request):
 
 	context = {
 		'total_deposits': total_deposits,
-		'total_borrowed': total_borrowed,
-		'union_balance': union_balance,
+		'total_invested': total_invested,
+		'total_investment_withdrawn': total_investment_withdrawn,
+		'net_profit': net_profit,
+		'total_on_loan': total_on_loan,
+		'on_hand': on_hand,
 		'contributions': contributions,
 		'recent_deposits': recent_deposits,
 		'recent_activities': recent_activities,

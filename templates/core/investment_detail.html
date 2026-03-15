@@ -29,8 +29,8 @@
     <section class="panel soft-panel" style="margin-top: 1.5rem;">
         <p><strong>Proposed by:</strong> {{ investment.creator.get_full_name|default:investment.creator.username }}</p>
         <p><strong>Invested on:</strong> {{ investment.invested_on|date:'d M Y' }}</p>
-        <p><strong>Received amount:</strong> {% if investment.received_amount %}৳{{ investment.received_amount }}{% else %}Not received yet{% endif %}</p>
-        <p><strong>Receive on:</strong> {% if investment.received_on %}{{ investment.received_on|date:'d M Y' }}{% else %}-{% endif %}</p>
+        <p><strong>Investment returned:</strong> {% if investment.received_amount %}৳{{ investment.received_amount }}{% else %}Not returned yet{% endif %}</p>
+        <p><strong>Returned on:</strong> {% if investment.received_on %}{{ investment.received_on|date:'d M Y' }}{% else %}-{% endif %}</p>
         {% if investment.note %}
             <p><strong>Note:</strong> {{ investment.note }}</p>
         {% endif %}
